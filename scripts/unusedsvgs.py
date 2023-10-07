@@ -22,7 +22,7 @@ def main():
                                    "help", "fzp", "svg"])
     except getopt.GetoptError as err:
         # print help information and exit:
-        print(str(err))  # will print something like "option -a not recognized"
+        print(err)
         usage()
         return
 
@@ -60,7 +60,7 @@ def main():
                 continue
 
             basename = os.path.basename(root)
-            if svgfiles.get(basename) == None:
+            if svgfiles.get(basename) is None:
                 svgfiles[basename] = []
 
             svgfiles[basename].append(filename)
@@ -76,7 +76,7 @@ def main():
             try:
                 dom = xml.dom.minidom.parse(fzpFilename)
             except xml.parsers.expat.ExpatError as err:
-                print(str(err), fzpFilename)
+                print(err, fzpFilename)
                 continue
 
             fzp = dom.documentElement
@@ -87,8 +87,7 @@ def main():
                     for layersNode in layersNodes:
                         image = layersNode.getAttribute("image")
                         dn = os.path.dirname(image)
-                        viewFiles = svgfiles.get(dn)
-                        if viewFiles:
+                        if viewFiles := svgfiles.get(dn):
                             fn = os.path.basename(image)
                             try:
                                 if fn in viewFiles:
@@ -99,15 +98,13 @@ def main():
                                 pass
 
     count_unsued = 0
-    for key in svgfiles.keys():
+    for key in svgfiles:
         for name in svgfiles.get(key):
             print("unused {0}/{1}".format(key, name))
             count_unsued += 1
 
     print("Unused svg files found: %d" % count_unsued)
-    if count_unused>2318:
-        return -1
-    return 0
+    return -1 if count_unused>2318 else 0
 
 if __name__ == "__main__":
     sys.exit(main())

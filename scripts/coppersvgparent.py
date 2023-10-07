@@ -25,7 +25,7 @@ def main():
         opts, args = getopt.getopt(sys.argv[1:], "hd:", ["help", "directory"])
     except getopt.GetoptError as err:
         # print help information and exit:
-        print(str(err))  # will print something like "option -a not recognized"
+        print(err)
         usage()
         sys.exit(2)
 
@@ -56,7 +56,7 @@ def main():
             try:
                 dom = xml.dom.minidom.parse(svgFilename)
             except xml.parsers.expat.ExpatError as err:
-                print(str(err), svgFilename)
+                print(err, svgFilename)
                 continue
 
             svg = dom.documentElement

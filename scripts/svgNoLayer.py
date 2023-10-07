@@ -63,19 +63,16 @@ def main():
                     continue
 
                 count_checks += 1
-                infile = open(os.path.join(root, filename), "r")
-                svg = infile.read()
-                infile.close()
-
-                msg = parseIDs(svg)
-                if msg:
+                with open(os.path.join(root, filename), "r") as infile:
+                    svg = infile.read()
+                if msg := parseIDs(svg):
                     print("{0} {1}".format(
                         os.path.join(root, filename), msg))
                     count_errors += 1
 
-    print("%s svg files checked." % count_checks)
-    print("%s svg files skipped." % count_skips)
-    print("%s svg layer id errors found." % count_errors)
+    print(f"{count_checks} svg files checked.")
+    print(f"{count_skips} svg files skipped.")
+    print(f"{count_errors} svg layer id errors found.")
 
     return count_errors
 
@@ -95,7 +92,7 @@ def parseElement(element):
         if tag == 'g':
             return parseElement(c)
 
-        return "child element '" + tag + "' with no layer id"
+        return f"child element '{tag}' with no layer id"
 
     return None
 
@@ -103,24 +100,18 @@ def parseIDs(svg):
     try:
         dom = xml.dom.minidom.parseString(svg)
     except xml.parsers.expat.ExpatError as err:
-        return "xml error " + str(err)
+        return f"xml error {str(err)}"
 
     root = dom.documentElement
     id = root.getAttribute("id")
-    if id in layers:
-        # Note: This is an error, Fritzing has problems with
-        # layer ids in the root element at least until
-        # version 0.9.9
-        return "svg contains layer id " + id
-    return parseElement(root)
+    return f"svg contains layer id {id}" if id in layers else parseElement(root)
 
 
 def readSkip(skipfile):
     skip_files = []
-    if(skipfile):
-        infile = open(skipfile, "r")
-        skip_files = infile.read().splitlines()
-        infile.close()
+    if skipfile:
+        with open(skipfile, "r") as infile:
+            skip_files = infile.read().splitlines()
     for i, item in enumerate(skip_files):
         skip_files[i] = os.path.basename(item)
 

@@ -26,7 +26,7 @@ def main():
         opts, args = getopt.getopt(sys.argv[1:], "hd:", ["help", "directory"])
     except getopt.GetoptError as err:
         # print help information and exit:
-        print(str(err))  # will print something like "option -a not recognized"
+        print(err)
         usage()
         sys.exit(2)
     outputDir = None
@@ -51,17 +51,16 @@ def main():
     for root, dirs, files in os.walk(outputDir, topdown=False):
         for filename in files:
             if (filename.endswith(".fzp")):
-                infile = open(os.path.join(root, filename), "r")
-                fzp = infile.read()
-                infile.close()
+                with open(os.path.join(root, filename), "r") as infile:
+                    fzp = infile.read()
                 copperMatch = re.search('copper', fzp)
                 silkscreenMatch = re.search('silkscreen', fzp)
 
-                if (copperMatch == None):
+                if copperMatch is None:
                     print("{0} {1}".format(os.path.join(
                         root, filename), "no copper"))
                     hasError += 1
-                elif (silkscreenMatch == None):
+                elif silkscreenMatch is None:
                     print("{0} {1}".format(os.path.join(
                         root, filename), "no silkscreen"))
                     hasError += 1

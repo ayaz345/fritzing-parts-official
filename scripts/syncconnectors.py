@@ -25,14 +25,11 @@ def getIndex(element):
     global IndexFinder
 
     id = element.attrib.get("id")
-    if id == None:
+    if id is None:
         return -1
 
     match = IndexFinder.search(id)
-    if match == None:
-        return -1
-
-    return int(match.group(1))
+    return -1 if match is None else int(match.group(1))
 
 
 def main():
