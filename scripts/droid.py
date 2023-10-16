@@ -26,7 +26,7 @@ def main():
         opts, args = getopt.getopt(sys.argv[1:], "hd:", ["help", "directory"])
     except getopt.GetoptError as err:
         # print help information and exit:
-        print(str(err))  # will print something like "option -a not recognized"
+        print(err)
         usage()
         sys.exit(2)
     outputDir = None
@@ -49,17 +49,15 @@ def main():
     for root, dirs, files in os.walk(outputDir, topdown=False):
         for filename in files:
             if (filename.endswith(".svg")):
-                infile = open(os.path.join(root, filename), "r")
-                svg = infile.read()
-                infile.close()
+                with open(os.path.join(root, filename), "r") as infile:
+                    svg = infile.read()
                 svg1 = svg.replace("'Droid Sans'", "DroidSans")
                 svg2 = svg1.replace("Droid Sans", "DroidSans")
                 svg3 = svg2.replace("'DroidSans'", "DroidSans")
 
                 if (len(svg3) != len(svg)):
-                    outfile = open(os.path.join(root, filename), "w")
-                    outfile.write(svg3)
-                    outfile.close()
+                    with open(os.path.join(root, filename), "w") as outfile:
+                        outfile.write(svg3)
                     print("{0}".format(os.path.join(root, filename)))
 
 

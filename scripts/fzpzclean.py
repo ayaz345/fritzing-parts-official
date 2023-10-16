@@ -34,7 +34,7 @@ def main():
                                    "help", "fzpzs", "directory", "output", "rename"])
     except getopt.GetoptError as err:
         # print help information and exit:
-        print(str(err))  # will print something like "option -a not recognized"
+        print(err)
         usage()
         sys.exit(2)
     inputdir = None
@@ -88,16 +88,12 @@ def main():
             fzplocation = None
 
             # extract files to directory structure
-            for i, name in enumerate(zf.namelist()):
+            for name in zf.namelist():
                 if not name.endswith('/'):
 
                     # identify file type
                     ending = name.split('.')[-1]
-                    if ending == 'svg':
-                        pass
-                    elif ending == 'fzp':
-                        pass
-                    else:
+                    if ending not in ['svg', 'fzp']:
                         print("WARNING wrong file type:", name)
                         return
 
@@ -106,13 +102,13 @@ def main():
                     if ending == 'fzp':
                         subdir = outputPrefix
                     elif name.find('icon') >= 0:
-                        subdir = 'svg/' + outputPrefix + '/icon'
+                        subdir = f'svg/{outputPrefix}/icon'
                     elif name.find('pcb') >= 0:
-                        subdir = 'svg/' + outputPrefix + '/pcb'
+                        subdir = f'svg/{outputPrefix}/pcb'
                     elif name.find('schem') >= 0:
-                        subdir = 'svg/' + outputPrefix + '/schematic'
+                        subdir = f'svg/{outputPrefix}/schematic'
                     elif name.find('bread') >= 0:
-                        subdir = 'svg/' + outputPrefix + '/breadboard'
+                        subdir = f'svg/{outputPrefix}/breadboard'
 
                     # remove junk from filenames
                     outname = name
@@ -126,8 +122,8 @@ def main():
                     outname = re.sub(
                         '((__)|(_))((icon)|(breadboard)|(schematic)|(pcb))', '', outname)
                     # remove duplicate file endings
-                    outname = re.sub('.' + ending, '', outname)
-                    outname += '.' + ending
+                    outname = re.sub(f'.{ending}', '', outname)
+                    outname += f'.{ending}'
 
                     # optionally rename the fzp to that of the fzpz
                     if ending == 'fzp' and rename:
@@ -137,36 +133,37 @@ def main():
 
                     # write new files
                     filelocation = os.path.join(outputdir, subdir, outname)
-                    outfile = open(filelocation, 'wb')
-                    outfile.write(zf.read(name))
-                    outfile.flush()
-                    outfile.close()
-
+                    with open(filelocation, 'wb') as outfile:
+                        outfile.write(zf.read(name))
+                        outfile.flush()
                     # store paths for reference update
                     if ending == 'svg':
                         svgrenames.append((refname, outname))
                     elif ending == 'fzp':
                         fzplocation = filelocation
 
-            # update svg references in fzp
-            fzpfile = open(fzplocation, 'r+')
-            s = fzpfile.read()
-            for svgre in svgrenames:
-                if s.find(svgre[0]) == -1:
-                    print("WARNING reference could not be found:", svgre[0])
-                s = s.replace(svgre[0], svgre[1])
-            fzpfile.seek(0)
-            fzpfile.truncate()
-            fzpfile.write(s)
-            fzpfile.flush()
-            fzpfile.close()
+            with open(fzplocation, 'r+') as fzpfile:
+                s = fzpfile.read()
+                for svgre in svgrenames:
+                    if s.find(svgre[0]) == -1:
+                        print("WARNING reference could not be found:", svgre[0])
+                    s = s.replace(svgre[0], svgre[1])
+                fzpfile.seek(0)
+                fzpfile.truncate()
+                fzpfile.write(s)
+                fzpfile.flush()
             zf.close()
 
 
 def createstructure(file, dir, outputPrefix):
     # makedirs(listdirs(file), dir)
-    dirs = [outputPrefix, 'svg/' + outputPrefix + '/icon', 'svg/' + outputPrefix +
-            '/breadboard', 'svg/' + outputPrefix + '/schematic', 'svg/' + outputPrefix + '/pcb']
+    dirs = [
+        outputPrefix,
+        f'svg/{outputPrefix}/icon',
+        f'svg/{outputPrefix}/breadboard',
+        f'svg/{outputPrefix}/schematic',
+        f'svg/{outputPrefix}/pcb',
+    ]
     makedirs(dirs, dir)
 
 
@@ -184,12 +181,7 @@ def listdirs(file):
     to extract the file to it. """
     zf = zipfile.ZipFile(file)
 
-    dirs = []
-
-    for name in zf.namelist():
-        if name.endswith('/'):
-            dirs.append(name)
-
+    dirs = [name for name in zf.namelist() if name.endswith('/')]
     zf.close()
     dirs.sort()
     return dirs

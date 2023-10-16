@@ -15,8 +15,7 @@ def main():
     ret = 0
     for root, dirs, files in os.walk(args.folder, topdown=False):
         for filename in files:
-            remainder = re.sub('[ -~]', '', filename)
-            if remainder:
+            if remainder := re.sub('[ -~]', '', filename):
                 print("not ascii", os.path.join(root, filename))
                 ret = -1
 

@@ -17,10 +17,7 @@ def skip(filename):
         """
     skip_files = [os.path.normpath(file) for file in skip_files_string.split('\n') if file]
     normalized_filename = os.path.normpath(filename)
-    if normalized_filename in skip_files:
-        return True
-
-    return False
+    return normalized_filename in skip_files
 
 
 # Chardet had problems detecting utf-8 chars for omega, male and female symbols.
@@ -61,7 +58,10 @@ def highlight_non_ascii(file_path):
     with open(file_path, 'r', errors='ignore') as f:
         for line_num, line in enumerate(f, 1):
             if re.search(r'[^\x00-\x7F]', line):
-                print(colorama.Fore.GREEN + f'Line {line_num}:' + colorama.Style.RESET_ALL, end='')
+                print(
+                    f'{colorama.Fore.GREEN}Line {line_num}:{colorama.Style.RESET_ALL}',
+                    end='',
+                )
                 for char in line:
                     if ord(char) > 127:
                         print(colorama.Fore.RED + char + colorama.Style.RESET_ALL, end='')
@@ -70,21 +70,22 @@ def highlight_non_ascii(file_path):
 
 
 def check_file(target, file_extension, encoding_statistic, non_utf8_files):
-    if target.endswith(file_extension):
-        encoding = "skipped"
-        if not skip(target):
-            encoding, confidence = get_encoding_type_charset_normalizer(target)
-        if encoding not in ["utf-8", "ascii", "skipped"]:
-            print(f"File: {target}, Encoding: {encoding}, Confidence: {confidence}")
-            if confidence < 0.8:
-                encoding = encoding + " maybe"
-            else:
-                non_utf8_files.append(target)
-        if encoding not in ['ascii'] and global_config.verbose:
-            print(f"File: {target}, Encoding: {encoding}, Confidence: {confidence}")
-            highlight_non_ascii(target)
+    if not target.endswith(file_extension):
+        return
+    encoding = "skipped"
+    if not skip(target):
+        encoding, confidence = get_encoding_type_charset_normalizer(target)
+    if encoding not in ["utf-8", "ascii", "skipped"]:
+        print(f"File: {target}, Encoding: {encoding}, Confidence: {confidence}")
+        if confidence < 0.8:
+            encoding = f"{encoding} maybe"
+        else:
+            non_utf8_files.append(target)
+    if encoding not in ['ascii'] and global_config.verbose:
+        print(f"File: {target}, Encoding: {encoding}, Confidence: {confidence}")
+        highlight_non_ascii(target)
 
-        encoding_statistic[encoding] = encoding_statistic.get(encoding, 0) + 1
+    encoding_statistic[encoding] = encoding_statistic.get(encoding, 0) + 1
 
 
 def search_directory(target, file_extension, encoding_statistic, non_utf8_files):
@@ -147,9 +148,7 @@ def main():
 
     target = args.target
 
-    has_non_utf8_files = print_statistic(target)
-
-    if has_non_utf8_files:
+    if has_non_utf8_files := print_statistic(target):
         sys.exit("Error: found files that are not UTF-8 or ASCII encoded.")
 
 

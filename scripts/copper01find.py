@@ -23,7 +23,7 @@ def main():
         opts, args = getopt.getopt(sys.argv[1:], "hf:", ["help", "file"])
     except getopt.GetoptError as err:
         # print help information and exit:
-        print(str(err))  # will print something like "option -a not recognized"
+        print(err)
         usage()
         return
 
@@ -40,14 +40,14 @@ def main():
         else:
             assert False, "unhandled option"
 
-    if filename == None:
+    if filename is None:
         usage()
         return
 
     try:
         dom = xml.dom.minidom.parse(filename)
     except xml.parsers.expat.ExpatError as err:
-        print(str(err), filename)
+        print(err, filename)
         return
 
     moduleIDs = {}
@@ -57,10 +57,10 @@ def main():
     for instance in instances:
         moduleID = instance.getAttribute("moduleIdRef")
         path = instance.getAttribute("path")
-        if moduleIDs.get(moduleID) == None:
+        if moduleIDs.get(moduleID) is None:
             moduleIDs[moduleID] = path
 
-    for moduleID in moduleIDs.keys():
+    for moduleID in moduleIDs:
         print(moduleID)
         print("    ", moduleIDs[moduleID])
 

@@ -103,7 +103,7 @@ def main():
         opts, args = getopt.getopt(sys.argv[1:], "hd:", ["help", "directory"])
     except getopt.GetoptError as err:
         # print help information and exit:
-        print(str(err))  # will print something like "option -a not recognized"
+        print(err)
         usage()
         return -1
 
@@ -143,7 +143,7 @@ def main():
             try:
                 dom = xml.dom.minidom.parse(fzpFilename)
             except xml.parsers.expat.ExpatError as err:
-                print(str(err), fzpFilename)
+                print(err, fzpFilename)
                 ret = -3
                 continue
 
@@ -165,7 +165,7 @@ def main():
                 try:
                     id = connector.getAttribute("id")
                     match = numberFinder.search(id)
-                    if match == None:
+                    if match is None:
                         continue
 
                     if match.group(1) == '0':
@@ -174,12 +174,10 @@ def main():
                 except:
                     continue
 
-            nameZero = False
-            for connector in connectors:
-                if connector.getAttribute("name") == "0":
-                    nameZero = True
-                    break
-
+            nameZero = any(
+                connector.getAttribute("name") == "0"
+                for connector in connectors
+            )
             mismatches = []
             for connector in connectors:
                 idInt = 0
@@ -187,7 +185,7 @@ def main():
                 try:
                     id = connector.getAttribute("id")
                     match = numberFinder.search(id)
-                    if match == None:
+                    if match is None:
                         continue
 
                     idInt = int(match.group(1))
@@ -197,18 +195,16 @@ def main():
                     continue
 
                 mismatch = False
-                if nameZero and idZero:
+                if nameZero and idZero or not nameZero and not idZero:
                     mismatch = (idInt != nameInt)
                 elif nameZero:
                     mismatch = (idInt != nameInt + 1)
-                elif idZero:
-                    mismatch = (idInt + 1 != nameInt)
                 else:
-                    mismatch = (idInt != nameInt)
+                    mismatch = (idInt + 1 != nameInt)
                 if mismatch:
                     mismatches.append(connector)
 
-            if len(mismatches) > 0:
+            if mismatches:
                 ret = -1
                 print(fzpFilename, nameZero, idZero)
                 for connector in mismatches:
@@ -220,7 +216,7 @@ def main():
         print("No files checked in ", dir)
         ret = -2
     else:
-        print("%s files checked" % count)
+        print(f"{count} files checked")
 
     return ret
 

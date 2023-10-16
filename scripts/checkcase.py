@@ -86,7 +86,7 @@ def main():
             try:
                 dom = xml.dom.minidom.parse(fzpFilename)
             except xml.parsers.expat.ExpatError as err:
-                print(str(err), fzpFilename)
+                print(err, fzpFilename)
                 continue
 
             doUpdate = False
@@ -117,8 +117,8 @@ def main():
 
                 for subpath in ['core', 'contrib', 'obsolete']:
                     path = os.path.join(svgdir, subpath, image)
-                    if not lowersvgs.get(path.lower()) is None:
-                        if not path in allsvgs:
+                    if lowersvgs.get(path.lower()) is not None:
+                        if path not in allsvgs:
                             print("mismatch", fzpFilename)
                             print("\t", path)
                             print("\t", lowersvgs.get(path.lower()))
@@ -136,19 +136,18 @@ def main():
             if doUpdate:
                 count_fixes += 1
                 if sys.version_info >= (3,8,0):
-                    outfile = open(fzpFilename, 'wb')
-                    s = dom.toxml("UTF-8")
-                    outfile.write(s)
-                    outfile.close()
+                    with open(fzpFilename, 'wb') as outfile:
+                        s = dom.toxml("UTF-8")
+                        outfile.write(s)
                 ret = -1
 
-    print("%s fzp files checked." % count_checks)
-    print("%s fzp files skipped." % count_skips)
-    print("%s fzp case-sensitivity errors found." % count_fixes)
+    print(f"{count_checks} fzp files checked.")
+    print(f"{count_skips} fzp files skipped.")
+    print(f"{count_fixes} fzp case-sensitivity errors found.")
     if count_fixes > 0 and sys.version_info < (3,8,0):
         print("Fixes not applied. Please use at least python 3.8 to preserve attributes order. This is important for human readability of xml files.")
 
-    print("%s svg file references broken." % count_missing )
+    print(f"{count_missing} svg file references broken.")
     return ret
 
 

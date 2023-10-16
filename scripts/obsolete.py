@@ -21,7 +21,7 @@ def get_dom(filename):
     try:
         dom = xml.dom.minidom.parse(filename)
     except xml.parsers.expat.ExpatError as err:
-        print(str(err), filename)
+        print(err, filename)
         sys.exit(-1)
 
     return dom.documentElement
@@ -79,15 +79,15 @@ def main():
 
     fzpFilename = os.path.normpath(args.part)
     if not fzpFilename.endswith(".fzp"):
-        print("File ending should be fzp: %s" % fzpFilename)
+        print(f"File ending should be fzp: {fzpFilename}")
         return -1
 
-    if not os.path.basename(os.path.dirname(fzpFilename)) == 'core':
+    if os.path.basename(os.path.dirname(fzpFilename)) != 'core':
         print("Obsoletion script is currently only tested with core parts")
         return -1
 
     if not os.path.isfile(fzpFilename):
-        print("File not found '%s' " % fzpFilename)
+        print(f"File not found '{fzpFilename}' ")
         return -1
 
     global simulate
@@ -107,20 +107,16 @@ def main():
         topdir, 'obsolete', os.path.basename(fzpFilename))
 
     if re.search(r"/|\.fzp", args.name):
-        print("<name> should be a name, not a filename. Got: '%s' " % args.name)
+        print(f"<name> should be a name, not a filename. Got: '{args.name}' ")
         return -1
 
     name = args.name
-    if args.revision:
-        revision = "%03d" % args.revision
-    else:
-        revision = "%03d" % 2
-
+    revision = "%03d" % args.revision if args.revision else "%03d" % 2
     if args.hash:
         part_hash = "%07x" % int(args.hash, 0)
     else:
         part_hash = "%07x" % random.randint(1, 268435454)
-        
+
     new_fzp_filename = "_".join([name, part_hash, revision]) + ".fzp"
     new_svg_filename = "_".join([name, part_hash, revision]) + ".svg"
 
@@ -128,7 +124,7 @@ def main():
     obsolete_fzp_dom = get_dom(fzpFilename)
 
     if os.path.isfile(obsolete_fzp):
-        raise Exception("Error: destination already exists %s " % obsolete_fzp)
+        raise Exception(f"Error: destination already exists {obsolete_fzp} ")
     command("git", "mv", fzpFilename, obsolete_fzp)
 
     new_fzp_dom = deepcopy(obsolete_fzp_dom)
@@ -142,7 +138,7 @@ def main():
         path = os.path.join(os.path.dirname(fzpdir), "svg",
                             os.path.basename(fzpdir), image)
         if not os.path.isfile(path):
-            print("Warning: %s not found. Ignoring" % path)
+            print(f"Warning: {path} not found. Ignoring")
             continue
 
         new_svg = os.path.join(os.path.dirname(path), new_svg_filename)
@@ -153,7 +149,7 @@ def main():
         dest = os.path.join(topdir, "svg", "obsolete", os.path.basename(
             os.path.dirname(path)), os.path.basename(path))
         if os.path.isfile(dest):
-            raise Exception("Error: destination already exists %s " % dest)
+            raise Exception(f"Error: destination already exists {dest} ")
 
         command("git", "mv", path, dest)
 
@@ -162,7 +158,7 @@ def main():
         # 3 set new name in dom
         new_image = os.path.join(os.path.basename(
             os.path.dirname(image)), new_svg_filename)
-        print("set layer image to %s" % new_image)
+        print(f"set layer image to {new_image}")
         layer.setAttribute("image", new_image)
 
     old_module_id = obsolete_fzp_dom.getAttribute("moduleId")
@@ -170,30 +166,25 @@ def main():
 
     new_module_id = set_module_id(new_fzp_dom, name)
     print("with moduleId=\"%s\"" % new_module_id)
-    versions = obsolete_fzp_dom.getElementsByTagName("version")
-    if not versions:
+    if versions := obsolete_fzp_dom.getElementsByTagName("version"):
+        version = versions[0]
+
+    else:
         doc = obsolete_fzp_dom.ownerDocument
         version = doc.createElement("version")
         version.appendChild(doc.createTextNode("2"))
         obsolete_fzp_dom.appendChild(version)
-    else:
-        version = versions[0]
-
     version.setAttribute("replacedby", new_module_id)
 
     if not simulate:
-        print("Write %s" % new_fzp)
-        outfile = open(new_fzp, 'wb')
-        s = new_fzp_dom.toxml("UTF-8")
-        outfile.write(s)
-        outfile.close()
-
-        print("Write %s" % obsolete_fzp)
-        outfile = open(obsolete_fzp, 'wb')
-        s = obsolete_fzp_dom.toxml("UTF-8")
-        outfile.write(s)
-        outfile.close()
-
+        print(f"Write {new_fzp}")
+        with open(new_fzp, 'wb') as outfile:
+            s = new_fzp_dom.toxml("UTF-8")
+            outfile.write(s)
+        print(f"Write {obsolete_fzp}")
+        with open(obsolete_fzp, 'wb') as outfile:
+            s = obsolete_fzp_dom.toxml("UTF-8")
+            outfile.write(s)
     # s = obsolete_fzp_dom.toxml("UTF-8")
     # print(s)
     command("git", "add", new_fzp)

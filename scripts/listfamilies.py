@@ -34,7 +34,7 @@ def main():
             try:
                 dom = xml.dom.minidom.parse(fzpFilename)
             except xml.parsers.expat.ExpatError as err:
-                print(str(err), fzpFilename)
+                print(err, fzpFilename)
                 continue
 
             fzp = dom.documentElement
@@ -49,12 +49,10 @@ def main():
                         for node in part_property.childNodes:
                             if node.nodeType == node.TEXT_NODE:
                                 if options.prefix.lower() not in node.data.lower():
-                                    node.data = options.prefix + " " + node.data
-                                    outfile = open(fzpFilename, 'wb')
-                                    s = dom.toxml("UTF-8")
-                                    outfile.write(s)
-                                    outfile.close()
-
+                                    node.data = f"{options.prefix} {node.data}"
+                                    with open(fzpFilename, 'wb') as outfile:
+                                        s = dom.toxml("UTF-8")
+                                        outfile.write(s)
                                 break
                     break
 
@@ -64,10 +62,7 @@ def main():
 
 
 def getText(nodelist):
-    rc = []
-    for node in nodelist:
-        if node.nodeType == node.TEXT_NODE:
-            rc.append(node.data)
+    rc = [node.data for node in nodelist if node.nodeType == node.TEXT_NODE]
     return ''.join(rc)
 
 

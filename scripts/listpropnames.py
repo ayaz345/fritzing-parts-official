@@ -27,7 +27,7 @@ def main():
         opts, args = getopt.getopt(sys.argv[1:], "hd:", ["help", "directory"])
     except getopt.GetoptError as err:
         # print help information and exit:
-        print(str(err))  # will print something like "option -a not recognized"
+        print(err)
         usage()
         sys.exit(2)
     outputDir = None
@@ -50,12 +50,12 @@ def main():
     names = []
     for filename in os.listdir(outputDir):
         if filename.endswith(".fzp"):
-            infile = open(os.path.join(outputDir, filename), "r")
-            fzp = infile.read()
-            infile.close()
-            match = re.search('<property.+name=\"(.+)\".*>.+</property>', fzp)
-            if match:
-                if not match.group(1) in names:
+            with open(os.path.join(outputDir, filename), "r") as infile:
+                fzp = infile.read()
+            if match := re.search(
+                '<property.+name=\"(.+)\".*>.+</property>', fzp
+            ):
+                if match.group(1) not in names:
                     names.append(match.group(1))
                     print("{0}".format(match.group(1)))
 

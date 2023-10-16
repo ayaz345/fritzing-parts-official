@@ -27,7 +27,7 @@ def main():
                                    "help", "directory", "font"])
     except getopt.GetoptError as err:
         # print help information and exit:
-        print(str(err))  # will print something like "option -a not recognized"
+        print(err)
         usage()
         sys.exit(2)
     outputDir = None
@@ -53,10 +53,8 @@ def main():
     for root, dirs, files in os.walk(outputDir, topdown=False):
         for filename in files:
             if (filename.endswith(".svg")):
-                infile = open(os.path.join(root, filename), "r")
-                svg = infile.read()
-                infile.close()
-
+                with open(os.path.join(root, filename), "r") as infile:
+                    svg = infile.read()
                 matches = re.findall('font-family\\s*=\\s*\"(.+)\"', svg)
                 listMatches(matches, fonts, root, filename)
 
@@ -66,11 +64,7 @@ def main():
 
 def listMatches(matches, fonts, root, filename):
     for m in matches:
-        gotone = 0
-        for fontname in fonts:
-            if (m.find(fontname) >= 0):
-                gotone = 1
-                break
+        gotone = next((1 for fontname in fonts if (m.find(fontname) >= 0)), 0)
         if not gotone:
             print("{0}::{1}".format(os.path.join(root, filename), m))
 

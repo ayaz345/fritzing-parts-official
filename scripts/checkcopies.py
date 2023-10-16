@@ -36,7 +36,7 @@ def main():
         opts, args = getopt.getopt(sys.argv[1:], "hd:", ["help", "directory"])
     except getopt.GetoptError as err:
         # print help information and exit:
-        print(str(err))  # will print something like "option -a not recognized"
+        print(err)
         usage()
         return
 
@@ -68,15 +68,14 @@ def main():
         s = os.stat(f1).st_size
         # print("Check candidate %s , %d" % (files[i], s))
         j = i + 1
-        while s == os.stat(files[j]).st_size:            
+        while s == os.stat(files[j]).st_size:    
             f2 = files[j]
             # print("          other %s , %d" % (files[j], s))
             j += 1
             txt1 = None
             try:
-                infile = open(f1, "r")
-                txt1 = infile.read()
-                infile.close()
+                with open(f1, "r") as infile:
+                    txt1 = infile.read()
             except IOError:
                 print("failure", f1)
             if txt1 is None:
@@ -84,9 +83,8 @@ def main():
 
             txt2 = None
             try:
-                infile = open(f2, "r")
-                txt2 = infile.read()
-                infile.close()
+                with open(f2, "r") as infile:
+                    txt2 = infile.read()
             except IOError:
                 print("failure", f2)
                 continue
